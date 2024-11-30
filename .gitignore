@@ -21,6 +21,7 @@
 .env.development.local
 .env.test.local
 .env.production.local
+*.exe  # Add this line to ignore all .exe files
 
 # debug
 npm-debug.log*
@@ -50,6 +51,7 @@ next-env.d.ts
 *.log
 *.tmp
 tmp/
+venv/
 
 # Build artifacts
 dist/
