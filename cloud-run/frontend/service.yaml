@@ -1,0 +1,44 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: hexproperty
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "2"
+        autoscaling.knative.dev/minScale: "0"
+    spec:
+      containerConcurrency: 6
+      containers:
+      - image: gcr.io/hexproperty/frontend:latest
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 200m
+            memory: 128Mi
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_ENV
+          value: "staging"
+        - name: API_URL
+          valueFrom:
+            configMapKeyRef:
+              name: frontend-config
+              key: api_url
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10

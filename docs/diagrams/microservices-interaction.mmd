@@ -1,0 +1,97 @@
+graph TB
+    %% API Gateway
+    subgraph "API Gateway"
+        AG[API Gateway]
+        AG_A[Authentication]
+        AG_R[Rate Limiting]
+        AG_C[Caching]
+    end
+
+    %% Core Services
+    subgraph "Property Management"
+        PS[Property Service]
+        PS_U[Units]
+        PS_M[Maintenance]
+        PS_A[Amenities]
+    end
+
+    subgraph "Tenant Management"
+        TS[Tenant Service]
+        TS_P[Profile]
+        TS_D[Documents]
+        TS_C[Communications]
+    end
+
+    subgraph "Lease Management"
+        LS[Lease Service]
+        LS_C[Contracts]
+        LS_P[Payments]
+        LS_R[Renewals]
+    end
+
+    subgraph "Financial Management"
+        FS[Financial Service]
+        FS_B[Billing]
+        FS_T[Transactions]
+        FS_R[Reports]
+    end
+
+    %% Support Services
+    subgraph "Support Services"
+        SS[Support Service]
+        SS_T[Tickets]
+        SS_N[Notifications]
+        SS_E[Escalations]
+    end
+
+    %% Event Bus
+    subgraph "Event Bus"
+        EB[Event Bus]
+        EB_P[Publishers]
+        EB_S[Subscribers]
+        EB_DL[Dead Letter]
+    end
+
+    %% Connections
+    AG --> PS
+    AG --> TS
+    AG --> LS
+    AG --> FS
+    AG --> SS
+
+    PS --> EB
+    TS --> EB
+    LS --> EB
+    FS --> EB
+    SS --> EB
+
+    %% Internal Service Connections
+    PS --> PS_U --> PS_M --> PS_A
+    TS --> TS_P --> TS_D --> TS_C
+    LS --> LS_C --> LS_P --> LS_R
+    FS --> FS_B --> FS_T --> FS_R
+    SS --> SS_T --> SS_N --> SS_E
+
+    %% Event Bus Connections
+    EB --> EB_P --> EB_S --> EB_DL
+
+    %% Cross-Service Dependencies
+    PS -.-> TS
+    TS -.-> LS
+    LS -.-> FS
+    SS -.-> PS
+    SS -.-> TS
+
+    %% Styling
+    classDef gateway fill:#f9f,stroke:#333,stroke-width:2px
+    classDef service fill:#bbf,stroke:#333,stroke-width:2px
+    classDef eventbus fill:#bfb,stroke:#333,stroke-width:2px
+    
+    class AG,AG_A,AG_R,AG_C gateway
+    class PS,TS,LS,FS,SS service
+    class EB,EB_P,EB_S,EB_DL eventbus
+
+    %% Labels
+    linkStyle default stroke:#333,stroke-width:2px
+    linkStyle 5,6,7,8,9 stroke:#0f0,stroke-width:2px
+    linkStyle 15,16,17,18 stroke:#f00,stroke-width:2px,stroke-dasharray: 5, 5

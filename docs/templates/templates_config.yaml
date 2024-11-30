@@ -1,0 +1,188 @@
+metadata:
+  version_rules:
+    format: "Major.Minor.Patch"
+    increment_rules:
+      major: "Breaking changes or significant architectural updates"
+      minor: "Feature additions or non-breaking changes"
+      patch: "Bug fixes and minor updates"
+    initial_version: "1.0.0"
+  
+  status_values:
+    - Draft
+    - In Review
+    - Approved
+    - Deprecated
+  
+  timestamp_format: "YYYY-MM-DD HH:mm UTC"
+  
+  document_id:
+    format: "{DOCTYPE}-{TIMESTAMP}-{UNIQUEID}"
+    doctypes:
+      ARCH: "Architecture Document"
+      DEP: "Deployment Document"
+      RES: "Resource Document"
+      SEC: "Security Document"
+
+templates:
+  "Deployment Guide":
+    file: "DEPLOYMENT_GUIDE_TEMPLATE.md"
+    doctype: "DEP"
+    relationships:
+      parents:
+        - name: "System Architecture Overview"
+          path: "../architecture/SYSTEM_ARCHITECTURE.md"
+          version: "2.1.0"
+          impact: "High"
+          description: "Derives deployment decisions from architecture"
+      children:
+        - name: "Resource Estimation"
+          path: "../deployment/RESOURCE_ESTIMATION.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Uses resource estimates for deployment planning"
+        - name: "Migration Strategy"
+          path: "../deployment/MIGRATION_STRATEGY.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Influences migration strategy"
+      related:
+        - name: "Security Framework"
+          path: "../security/SECURITY_FRAMEWORK.md"
+          version: "1.1.0"
+          impact: "High"
+          description: "Security patterns influence deployment"
+          bilateral: true
+
+  "Architecture Overview":
+    file: "ARCHITECTURE_OVERVIEW_TEMPLATE.md"
+    doctype: "ARCH"
+    relationships:
+      origin:
+        - name: "System Requirements Specification"
+          path: "../requirements/SYSTEM_REQUIREMENTS.md"
+          version: "2.0.0"
+          impact: "High"
+          description: "Derives architectural decisions from requirements"
+      
+      dependent:
+        - name: "Deployment Guide"
+          path: "../deployment/DEPLOYMENT_GUIDE.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Deployment structure based on architecture"
+        - name: "Resource Estimation"
+          path: "../deployment/RESOURCE_ESTIMATION.md"
+          version: "1.0.0"
+          impact: "Medium"
+          description: "Resource planning based on architecture"
+      
+      related:
+        - name: "Security Framework"
+          path: "../security/SECURITY_FRAMEWORK.md"
+          version: "1.1.0"
+          impact: "High"
+          description: "Security patterns influence architecture"
+          bilateral: true
+        - name: "Infrastructure Strategy"
+          path: "../infrastructure/INFRASTRUCTURE_STRATEGY.md"
+          version: "1.2.0"
+          impact: "High"
+          description: "Infrastructure decisions affect architecture"
+          bilateral: true
+
+  "Migration Strategy":
+    file: "MIGRATION_STRATEGY_TEMPLATE.md"
+    doctype: "DEP"
+    relationships:
+      parents:
+        - name: "System Architecture Overview"
+          path: "../architecture/SYSTEM_ARCHITECTURE.md"
+          version: "2.1.0"
+          impact: "High"
+          description: "Derives migration decisions from architecture"
+        - name: "Infrastructure Strategy"
+          path: "../infrastructure/INFRASTRUCTURE_STRATEGY.md"
+          version: "1.2.0"
+          impact: "High"
+          description: "Infrastructure constraints influence migration"
+      children:
+        - name: "Deployment Guide"
+          path: "../deployment/DEPLOYMENT_GUIDE.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Influences deployment decisions"
+        - name: "Resource Estimation"
+          path: "../deployment/RESOURCE_ESTIMATION.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Uses resource estimates for migration planning"
+      
+      related:
+        - name: "Security Framework"
+          path: "../security/SECURITY_FRAMEWORK.md"
+          version: "1.1.0"
+          impact: "High"
+          description: "Security patterns influence migration"
+          bilateral: true
+
+  "Resource Estimation":
+    file: "RESOURCE_ESTIMATION_TEMPLATE.md"
+    doctype: "RES"
+    relationships:
+      origin:
+        - name: "Architecture Overview"
+          path: "../architecture/ARCHITECTURE_OVERVIEW.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Resource requirements derived from architecture"
+        - name: "Infrastructure Strategy"
+          path: "../infrastructure/INFRASTRUCTURE_STRATEGY.md"
+          version: "1.2.0"
+          impact: "High"
+          description: "Infrastructure constraints influence resource planning"
+      
+      dependent:
+        - name: "Deployment Guide"
+          path: "../deployment/DEPLOYMENT_GUIDE.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Uses resource estimates for deployment planning"
+      
+      related:
+        - name: "Cost Management Strategy"
+          path: "../finance/COST_MANAGEMENT.md"
+          version: "1.0.0"
+          impact: "High"
+          description: "Cost implications of resource decisions"
+          bilateral: true
+
+validation_rules:
+  required_sections:
+    - "Document Purpose"
+    - "Target Audience"
+    - "Prerequisites"
+    - "Version History"
+    - "Document Relationships"
+  
+  relationship_rules:
+    - "All documents must have at least one origin document"
+    - "All relationships must specify impact and description"
+    - "Bilateral relationships must be reflected in both documents"
+    - "Version numbers must be specified for all document references"
+
+automation:
+  git_integration:
+    enabled: true
+    branch_validation: true
+    author_validation: true
+  
+  versioning:
+    auto_increment: true
+    changelog_required: true
+    impact_assessment_required: true
+  
+  notifications:
+    on_update:
+      - "Notify dependent document owners"
+      - "Update relationship references"
+      - "Generate change impact report"

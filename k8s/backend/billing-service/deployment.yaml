@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: billing-service
+  namespace: hexproperty
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: billing-service
+  template:
+    metadata:
+      labels:
+        app: billing-service
+    spec:
+      containers:
+      - name: billing-service
+        image: hexproperty/billing-service:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        env:
+        - name: NODE_ENV
+          value: "staging"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: billing-service-secrets
+              key: database_url
+        - name: KAFKA_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: billing-service-config
+              key: kafka_brokers
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: billing-service-secrets
+              key: stripe_secret_key
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: billing-service-secrets
+              key: redis_url
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: billing-service-config
+      imagePullSecrets:
+      - name: registry-secret

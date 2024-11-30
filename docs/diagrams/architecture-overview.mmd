@@ -1,0 +1,127 @@
+graph TD
+    %% Style Definitions
+    classDef core fill:#f9f,stroke:#333,stroke-width:2px
+    classDef adapter fill:#afd,stroke:#333,stroke-width:2px
+    classDef infrastructure fill:#ddf,stroke:#333,stroke-width:2px
+    classDef crosscutting fill:#ffd,stroke:#333,stroke-width:2px
+
+    %% Cross-cutting Concerns
+    subgraph "Cross-cutting Concerns"
+        direction LR
+        CC[Cross-cutting]
+        CC_S[Security & Auth]
+        CC_L[Logging & Monitoring]
+        CC_C[Configuration]
+        CC_T[Telemetry]
+        CC_R[Resilience]
+    end
+
+    %% Layer 8: Service Mesh
+    subgraph "Service Mesh Layer"
+        SM[Service Mesh Controller]
+        SM_D[Service Discovery]
+        SM_R[Load Balancing & Routing]
+        SM_S[Security & mTLS]
+        SM_M[Monitoring & Tracing]
+    end
+
+    %% Layer 7: Interface
+    subgraph "Interface Layer"
+        IF[API Gateway]
+        IF_R[REST Endpoints]
+        IF_G[GraphQL Gateway]
+        IF_W[WebSocket Handler]
+        IF_P[Protocol Buffers]
+    end
+
+    %% Layer 6: Support
+    subgraph "Support Layer"
+        SP[Support Services]
+        SP_L[Logging Service]
+        SP_M[Metrics Collector]
+        SP_T[Distributed Tracing]
+        SP_A[Alerting System]
+    end
+
+    %% Layer 5: Data
+    subgraph "Data Layer"
+        DT[Data Services]
+        DT_P[PostgreSQL Adapter]
+        DT_R[Redis Cache]
+        DT_E[Elasticsearch]
+        DT_M[MongoDB Adapter]
+    end
+
+    %% Layer 4: Events
+    subgraph "Event Layer"
+        EV[Event Bus]
+        EV_K[Kafka Streams]
+        EV_H[Event Handlers]
+        EV_S[Event Store]
+        EV_P[Event Publishers]
+    end
+
+    %% Layer 3: Application
+    subgraph "Application Layer"
+        AP[Application Services]
+        AP_C[Command Handlers]
+        AP_Q[Query Handlers]
+        AP_U[Use Cases]
+        AP_P[Ports]
+    end
+
+    %% Layer 2: Microservices
+    subgraph "Microservices Layer"
+        MS[Domain Services]
+        MS_P[Property Service]:::core
+        MS_T[Tenant Service]:::core
+        MS_L[Lease Service]:::core
+        MS_B[Billing Service]:::core
+    end
+
+    %% Layer 1: Domain
+    subgraph "Domain Layer"
+        DM[Domain Core]:::core
+        DM_M[Aggregates & Entities]
+        DM_V[Value Objects]
+        DM_E[Domain Events]
+        DM_P[Domain Policies]
+    end
+
+    %% Primary Connections
+    SM <--> IF
+    IF <--> SP
+    SP <--> DT
+    DT <--> EV
+    EV <--> AP
+    AP <--> MS
+    MS <--> DM
+
+    %% Cross-cutting Connections
+    CC --> SM
+    CC --> IF
+    CC --> SP
+    CC --> DT
+    CC --> EV
+    CC --> AP
+    CC --> MS
+    CC --> DM
+
+    %% Internal Layer Connections
+    SM_D --> SM_R --> SM_S --> SM_M
+    IF_R --> IF_G --> IF_W --> IF_P
+    SP_L --> SP_M --> SP_T --> SP_A
+    DT_P --> DT_R --> DT_E --> DT_M
+    EV_K --> EV_H --> EV_S --> EV_P
+    AP_C --> AP_Q --> AP_U --> AP_P
+    MS_P --> MS_T --> MS_L --> MS_B
+    DM_M --> DM_V --> DM_E --> DM_P
+
+    %% Cross-cutting Internal Connections
+    CC_S --> CC_L --> CC_C --> CC_T --> CC_R
+
+    %% Apply Styles
+    class SM,IF,SP,DT,EV infrastructure
+    class AP,MS adapter
+    class DM core
+    class CC crosscutting

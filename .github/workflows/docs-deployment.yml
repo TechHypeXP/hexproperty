@@ -1,0 +1,84 @@
+name: Documentation Deployment
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/docs/**'
+      - 'frontend/src/**/*.ts'
+      - 'frontend/src/**/*.tsx'
+  workflow_dispatch:
+
+jobs:
+  deploy-docs:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm install
+
+      - name: Check documentation quality
+        run: |
+          cd frontend
+          npx ts-node scripts/check-docs-quality.ts
+
+      - name: Generate documentation version
+        run: |
+          cd frontend
+          npx ts-node scripts/version-docs.ts generate
+
+      - name: Build documentation site
+        run: |
+          cd frontend
+          npm run build:docs
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: frontend/docs/build
+          branch: gh-pages
+          clean: true
+
+      - name: Create documentation summary
+        run: |
+          cd frontend
+          echo "## Documentation Changes" >> $GITHUB_STEP_SUMMARY
+          echo "Documentation has been updated and deployed." >> $GITHUB_STEP_SUMMARY
+          echo "View the latest documentation at: https://${{ github.repository_owner }}.github.io/HexProperty" >> $GITHUB_STEP_SUMMARY
+
+  notify-team:
+    needs: deploy-docs
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Send notification
+        uses: peter-evans/create-or-update-comment@v3
+        with:
+          issue-number: ${{ github.event.pull_request.number }}
+          body: |
+            📚 Documentation has been updated and deployed!
+            
+            View the latest documentation at: https://${{ github.repository_owner }}.github.io/HexProperty
+            
+            Changes include:
+            - Documentation quality checks passed
+            - Version information updated
+            - Documentation site rebuilt and deployed
+            
+            Please review the changes and ensure everything looks correct.

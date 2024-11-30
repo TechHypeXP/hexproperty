@@ -1,0 +1,9 @@
+templates_dir: "templates"
+deployment_history_path: "deployment_history.json"
+git_repo_path: "."
+default_hooks:
+  pre_deploy: "scripts/hooks/pre_deploy.py"
+  post_deploy: "scripts/hooks/post_deploy.py"
+max_history_entries: 100
+default_department: "Engineering"
+default_classification: "internal"

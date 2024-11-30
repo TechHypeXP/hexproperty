@@ -1,0 +1,26 @@
+#!/usr/bin/env sh
+. "$(dirname -- "$0")/_/husky.sh"
+
+# Run documentation validation
+npm run docs:validate
+
+# Run documentation generation
+npm run docs:generate
+
+# Run documentation tests
+npm run docs:test
+
+# Run tests
+npm run test
+
+# Run linting
+npm run lint
+
+# Run type checking
+npm run type-check
+
+# Validate TypeDoc documentation
+npm run docs:typedoc
+
+# Validate API documentation
+npm run docs:api

@@ -1,0 +1,52 @@
+sequenceDiagram
+    participant C as Client
+    participant AG as API Gateway
+    participant PS as Property Service
+    participant US as Unit Service
+    participant AS as Amenity Service
+    participant IS as Image Service
+    participant DB as Database
+    participant ES as Event Store
+    participant NS as Notification Service
+
+    %% Property Creation
+    C->>+AG: POST /properties
+    AG->>+PS: Create Property Command
+    PS->>DB: Validate Location
+    DB-->>PS: Location Valid
+    PS->>DB: Create Property
+    PS->>ES: Publish PropertyCreated
+
+    %% Unit Management
+    PS->>+US: Create Units
+    US->>DB: Store Unit Details
+    US->>ES: Publish UnitsCreated
+    US-->>-PS: Units Created
+
+    %% Amenity Setup
+    PS->>+AS: Configure Amenities
+    AS->>DB: Store Amenity Details
+    AS->>ES: Publish AmenitiesConfigured
+    AS-->>-PS: Amenities Added
+
+    %% Image Processing
+    PS->>+IS: Process Property Images
+    IS->>IS: Optimize Images
+    IS->>IS: Generate Thumbnails
+    IS->>DB: Store Image References
+    IS-->>-PS: Images Processed
+
+    %% Completion
+    PS-->>-AG: Property Created Response
+    AG-->>-C: 201 Created
+
+    %% Notifications
+    PS->>+NS: Notify Property Managers
+    NS-->>-PS: Notifications Sent
+
+    Note over C,NS: Property setup complete
+
+    %% Background Processing
+    Note over DB,ES: Background tasks continue
+    DB->>DB: Index property data
+    ES->>ES: Update search index

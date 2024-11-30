@@ -1,0 +1,68 @@
+# database.jinja
+# Purpose: Cloud SQL database configuration
+# Used by: deployment-config.yaml
+
+resources:
+# Main database instance
+- name: {{ properties.instance_name }}
+  type: gcp-types/sqladmin-v1beta4:instances
+  properties:
+    region: {{ properties.region }}
+    databaseVersion: {{ properties.database_version }}
+    settings:
+      tier: {{ properties.tier }}
+      backupConfiguration:
+        enabled: {{ properties.backup_enabled }}
+        startTime: {{ properties.backup_start_time }}
+        pointInTimeRecoveryEnabled: true
+      ipConfiguration:
+        requireSsl: true
+        privateNetwork: $(ref.vpc-network.selfLink)
+      availabilityType: {{ 'REGIONAL' if properties.high_availability else 'ZONAL' }}
+      databaseFlags: {{ properties.flags }}
+      maintenanceWindow:
+        day: 7  # Sunday
+        hour: 3 # 3 AM
+      insights:
+        queryInsightsEnabled: true
+        recordApplicationTags: true
+        recordClientAddress: true
+
+# Databases
+- name: {{ properties.instance_name }}-reservation-db
+  type: gcp-types/sqladmin-v1beta4:databases
+  properties:
+    instance: $(ref.{{ properties.instance_name }}.name)
+    name: reservation
+    charset: UTF8
+    collation: en_US.UTF8
+
+- name: {{ properties.instance_name }}-security-db
+  type: gcp-types/sqladmin-v1beta4:databases
+  properties:
+    instance: $(ref.{{ properties.instance_name }}.name)
+    name: security
+    charset: UTF8
+    collation: en_US.UTF8
+
+- name: {{ properties.instance_name }}-document-db
+  type: gcp-types/sqladmin-v1beta4:databases
+  properties:
+    instance: $(ref.{{ properties.instance_name }}.name)
+    name: document
+    charset: UTF8
+    collation: en_US.UTF8
+
+- name: {{ properties.instance_name }}-broker-db
+  type: gcp-types/sqladmin-v1beta4:databases
+  properties:
+    instance: $(ref.{{ properties.instance_name }}.name)
+    name: broker
+    charset: UTF8
+    collation: en_US.UTF8
+
+outputs:
+- name: instance_name
+  value: $(ref.{{ properties.instance_name }}.name)
+- name: connection_name
+  value: $(ref.{{ properties.instance_name }}.connectionName)

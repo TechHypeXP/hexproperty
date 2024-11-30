@@ -1,0 +1,320 @@
+apiVersion: v1
+kind: SecurityContext
+metadata:
+  name: hexproperty-security
+spec:
+  securityContext:
+    # User context
+    runAsUser: 10000
+    runAsGroup: 10000
+    fsGroup: 10000
+    runAsNonRoot: true
+    
+    # Filesystem security
+    readOnlyRootFilesystem: true
+    
+    # Privilege controls
+    allowPrivilegeEscalation: false
+    
+    # Comprehensive capability dropping
+    capabilities:
+      drop:
+        - "ALL"
+        - "AUDIT_CONTROL"
+        - "AUDIT_READ"
+        - "AUDIT_WRITE"
+        - "BLOCK_SUSPEND"
+        - "CHOWN"
+        - "DAC_OVERRIDE"
+        - "DAC_READ_SEARCH"
+        - "FOWNER"
+        - "FSETID"
+        - "IPC_LOCK"
+        - "IPC_OWNER"
+        - "KILL"
+        - "LEASE"
+        - "LINUX_IMMUTABLE"
+        - "MAC_ADMIN"
+        - "MAC_OVERRIDE"
+        - "MKNOD"
+        - "NET_ADMIN"
+        - "NET_BIND_SERVICE"
+        - "NET_BROADCAST"
+        - "NET_RAW"
+        - "SETGID"
+        - "SETFCAP"
+        - "SETPCAP"
+        - "SETUID"
+        - "SYS_ADMIN"
+        - "SYS_BOOT"
+        - "SYS_CHROOT"
+        - "SYS_MODULE"
+        - "SYS_NICE"
+        - "SYS_PACCT"
+        - "SYS_PTRACE"
+        - "SYS_RAWIO"
+        - "SYS_RESOURCE"
+        - "SYS_TIME"
+        - "SYS_TTY_CONFIG"
+        - "SYSLOG"
+        - "WAKE_ALARM"
+      add: []
+    
+    # Security profiles
+    seccompProfile:
+      type: RuntimeDefault
+    seLinuxOptions:
+      level: "s0:c123,c456"
+  
+  containers:
+    - name: "*"
+      securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 10000
+        runAsGroup: 10000
+        runAsNonRoot: true
+        readOnlyRootFilesystem: true
+        capabilities:
+          drop:
+            - "ALL"
+            - "NET_RAW"
+            - "NET_ADMIN"
+            - "SYS_ADMIN"
+            - "DAC_OVERRIDE"
+            - "CHOWN"
+            - "FOWNER"
+            - "SETUID"
+            - "SETGID"
+          add: []
+  
+  podSecurityPolicy:
+    spec:
+      privileged: false
+      allowPrivilegeEscalation: false
+      requiredDropCapabilities:
+        - "ALL"
+        - "NET_RAW"
+        - "NET_ADMIN"
+        - "SYS_ADMIN"
+        - "DAC_OVERRIDE"
+        - "CHOWN"
+        - "FOWNER"
+        - "SETUID"
+        - "SETGID"
+      volumes:
+        - 'configMap'
+        - 'emptyDir'
+        - 'projected'
+        - 'secret'
+        - 'downwardAPI'
+      runAsUser:
+        rule: 'MustRunAsNonRoot'
+        ranges:
+          - min: 10000
+            max: 65535
+      fsGroup:
+        rule: 'MustRunAs'
+        ranges:
+          - min: 10000
+            max: 65535
+      seLinux:
+        rule: 'RunAsAny'
+      supplementalGroups:
+        rule: 'MustRunAs'
+        ranges:
+          - min: 10000
+            max: 65535
+      
+      # Security Restrictions
+      hostNetwork: false
+      hostIPC: false
+      hostPID: false
+      hostPorts: []
+      privileged: false
+      allowedCapabilities: []
+      defaultAllowPrivilegeEscalation: false
+      forbiddenSysctls:
+        - '*'
+  
+  # Volume configuration with restricted permissions
+  volumes:
+    - name: config-volume
+      configMap:
+        name: hexproperty-config
+        defaultMode: 0440
+    - name: data-volume
+      emptyDir:
+        medium: Memory
+        sizeLimit: "256Mi"
+    - name: tmp-volume
+      emptyDir:
+        medium: Memory
+        sizeLimit: "128Mi"
+  
+  securityPolicy:
+    imagePolicy:
+      repositories:
+        - "gcr.io/hexproperty/*"
+      tag: "required"
+      digest: "required"
+      verify: true
+    
+    networkPolicy:
+      ingress:
+        - from:
+            - podSelector:
+                matchLabels:
+                  app: hexproperty
+              namespaceSelector:
+                matchLabels:
+                  name: prod
+      egress:
+        - to:
+            - ipBlock:
+                cidr: 10.0.0.0/8
+                except:
+                  - 10.0.0.0/24
+    
+    resources:
+      limits:
+        memory: "512Mi"
+        cpu: "500m"
+      requests:
+        memory: "256Mi"
+        cpu: "250m"
+    
+    securityControls:
+      enforceAppArmor: true
+      enforceSeccomp: true
+      blockSyscalls: true
+      enforceSelinux: true
+      
+    privilegeEscalation:
+      allowed: false
+      enforcePreventEscalation: true
+      blockSyscalls:
+        - "chmod"
+        - "fchmod"
+        - "chown"
+        - "fchown"
+        - "setuid"
+        - "setgid"
+        
+    # Additional security hardening
+    securityHardening:
+      enforceNoNewPrivileges: true
+      enforceSeccomp: true
+      seccompDefaultAction: "SCMP_ACT_ERRNO"
+      seccompAllowedSyscalls:
+        - "read"
+        - "write"
+        - "open"
+        - "close"
+        - "stat"
+        - "fstat"
+        - "lstat"
+        - "poll"
+        - "lseek"
+        - "mmap"
+        - "mprotect"
+        - "munmap"
+        - "brk"
+        - "rt_sigaction"
+        - "rt_sigprocmask"
+        - "rt_sigreturn"
+        - "ioctl"
+        - "pread64"
+        - "pwrite64"
+        - "readv"
+        - "writev"
+        - "access"
+        - "pipe"
+        - "select"
+        - "sched_yield"
+        - "mremap"
+        - "msync"
+        - "mincore"
+        - "madvise"
+        - "shmget"
+        - "shmat"
+        - "shmctl"
+        - "dup"
+        - "dup2"
+        - "pause"
+        - "nanosleep"
+        - "getitimer"
+        - "alarm"
+        - "setitimer"
+        - "getpid"
+        - "sendfile"
+        - "socket"
+        - "connect"
+        - "accept"
+        - "sendto"
+        - "recvfrom"
+        - "sendmsg"
+        - "recvmsg"
+        - "shutdown"
+        - "bind"
+        - "listen"
+        - "getsockname"
+        - "getpeername"
+        - "socketpair"
+        - "setsockopt"
+        - "getsockopt"
+        - "clone"
+        - "fork"
+        - "vfork"
+        - "execve"
+        - "exit"
+        - "wait4"
+        - "kill"
+        - "uname"
+        - "semget"
+        - "semop"
+        - "semctl"
+        - "shmdt"
+        - "msgget"
+        - "msgsnd"
+        - "msgrcv"
+        - "msgctl"
+        - "fcntl"
+        - "flock"
+        - "fsync"
+        - "fdatasync"
+        - "truncate"
+        - "ftruncate"
+        - "getcwd"
+        - "chdir"
+        - "fchdir"
+        - "rename"
+        - "mkdir"
+        - "rmdir"
+        - "creat"
+        - "link"
+        - "unlink"
+        - "symlink"
+        - "readlink"
+        - "chmod"
+        - "fchmod"
+        - "chown"
+        - "fchown"
+        - "lchown"
+        - "umask"
+        - "gettimeofday"
+        - "getrlimit"
+        - "getrusage"
+        - "sysinfo"
+        - "times"
+        - "ptrace"
+        - "getuid"
+        - "syslog"
+        - "getgid"
+        - "setuid"
+        - "setgid"
+        - "geteuid"
+        - "getegid"
+        - "setpgid"
+        - "getppid"
+        - "getpgrp"
+        - "setsid"

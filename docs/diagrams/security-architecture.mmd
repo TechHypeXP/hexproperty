@@ -1,0 +1,101 @@
+graph TB
+    %% External Layer
+    subgraph "Security Perimeter"
+        FW[Firewall]
+        WAF[Web Application Firewall]
+        DDoS[DDoS Protection]
+    end
+
+    %% Identity Layer
+    subgraph "Identity & Access"
+        IAM[Identity & Access Management]
+        OAuth[OAuth2/OIDC]
+        MFA[Multi-Factor Auth]
+        RBAC[Role-Based Access]
+    end
+
+    %% API Security
+    subgraph "API Security"
+        AG[API Gateway]
+        RT[Rate Limiting]
+        TH[Token Handler]
+        IP[IP Filtering]
+    end
+
+    %% Data Security
+    subgraph "Data Protection"
+        ENC[Encryption]
+        ENC_R[Data at Rest]
+        ENC_T[Data in Transit]
+        ENC_U[Data in Use]
+    end
+
+    %% Monitoring
+    subgraph "Security Monitoring"
+        SIEM[SIEM]
+        IDS[Intrusion Detection]
+        AUD[Audit Logging]
+        ALT[Alerting]
+    end
+
+    %% Compliance
+    subgraph "Compliance"
+        PCI[PCI DSS]
+        GDPR[GDPR]
+        SOC[SOC2]
+        HIPAA[HIPAA]
+    end
+
+    %% Flow
+    Internet --> FW
+    FW --> WAF
+    WAF --> DDoS
+    DDoS --> AG
+
+    AG --> IAM
+    IAM --> OAuth
+    OAuth --> MFA
+    MFA --> RBAC
+
+    AG --> RT
+    AG --> TH
+    AG --> IP
+
+    RBAC --> ENC
+    ENC --> ENC_R
+    ENC --> ENC_T
+    ENC --> ENC_U
+
+    %% Monitoring Flow
+    AG -.-> SIEM
+    IAM -.-> SIEM
+    ENC -.-> SIEM
+    SIEM --> IDS
+    SIEM --> AUD
+    SIEM --> ALT
+
+    %% Compliance Flow
+    ENC --> PCI
+    ENC --> GDPR
+    ENC --> SOC
+    ENC --> HIPAA
+
+    %% Styling
+    classDef perimeter fill:#f99,stroke:#333,stroke-width:2px
+    classDef identity fill:#9f9,stroke:#333,stroke-width:2px
+    classDef api fill:#99f,stroke:#333,stroke-width:2px
+    classDef data fill:#f9f,stroke:#333,stroke-width:2px
+    classDef monitor fill:#ff9,stroke:#333,stroke-width:2px
+    classDef comply fill:#9ff,stroke:#333,stroke-width:2px
+
+    class FW,WAF,DDoS perimeter
+    class IAM,OAuth,MFA,RBAC identity
+    class AG,RT,TH,IP api
+    class ENC,ENC_R,ENC_T,ENC_U data
+    class SIEM,IDS,AUD,ALT monitor
+    class PCI,GDPR,SOC,HIPAA comply
+
+    %% Flow Styles
+    linkStyle default stroke:#333,stroke-width:2px
+    linkStyle 14,15,16 stroke:#f00,stroke-width:2px,stroke-dasharray: 5, 5
+    linkStyle 17,18,19 stroke:#0f0,stroke-width:2px

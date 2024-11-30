@@ -1,0 +1,82 @@
+# cdn.jinja
+# Purpose: CDN and Load Balancer configuration
+# Used by: deployment-config.yaml
+
+resources:
+# Global External IP Address
+- name: {{ properties.name }}-ip
+  type: compute.v1.globalAddress
+
+# SSL Certificate
+- name: {{ properties.name }}-ssl
+  type: compute.v1.sslCertificate
+  properties:
+    managed:
+      domains: {{ properties.domains }}
+
+# Backend Service
+- name: {{ properties.backend_service }}
+  type: compute.v1.backendService
+  properties:
+    protocol: HTTPS
+    portName: http1
+    loadBalancingScheme: EXTERNAL
+    enableCDN: true
+    cdnPolicy:
+      cacheMode: USE_ORIGIN_HEADERS
+      defaultTtl: {{ properties.cache_policy.default_ttl }}
+      maxTtl: {{ properties.cache_policy.max_ttl }}
+      clientTtl: {{ properties.cache_policy.client_ttl }}
+      cacheKeyPolicy:
+        includeHost: true
+        includeProtocol: true
+        includeQueryString: false
+    securityPolicy: $(ref.{{ properties.name }}-security-policy.selfLink)
+    backends:
+    - group: $(ref.{{ properties.name }}-ig.selfLink)
+      balancingMode: UTILIZATION
+      maxUtilization: 0.8
+
+# URL Map
+- name: {{ properties.name }}-urlmap
+  type: compute.v1.urlMap
+  properties:
+    defaultService: $(ref.{{ properties.backend_service }}.selfLink)
+
+# HTTPS Proxy
+- name: {{ properties.name }}-https-proxy
+  type: compute.v1.targetHttpsProxy
+  properties:
+    urlMap: $(ref.{{ properties.name }}-urlmap.selfLink)
+    sslCertificates:
+    - $(ref.{{ properties.name }}-ssl.selfLink)
+
+# Forwarding Rule
+- name: {{ properties.name }}-forwarding-rule
+  type: compute.v1.globalForwardingRule
+  properties:
+    target: $(ref.{{ properties.name }}-https-proxy.selfLink)
+    IPAddress: $(ref.{{ properties.name }}-ip.address)
+    portRange: 443
+    loadBalancingScheme: EXTERNAL
+
+# Security Policy
+- name: {{ properties.name }}-security-policy
+  type: compute.v1.securityPolicy
+  properties:
+    name: {{ properties.security_policy.name }}
+    type: CLOUD_ARMOR
+    rules:
+    {% for rule in properties.security_policy.rules %}
+    - priority: {{ rule.priority }}
+      action: {{ rule.action }}
+      description: {{ rule.description }}
+      match:
+        expr: {{ rule.match.expr }}
+    {% endfor %}
+
+outputs:
+- name: ip_address
+  value: $(ref.{{ properties.name }}-ip.address)
+- name: url_map
+  value: $(ref.{{ properties.name }}-urlmap.selfLink)

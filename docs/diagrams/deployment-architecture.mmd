@@ -1,0 +1,132 @@
+graph TB
+    %% Cloud Infrastructure
+    subgraph "Google Cloud Platform"
+        %% Network Layer
+        subgraph "Network"
+            LB[Load Balancer]
+            CDN[Cloud CDN]
+            VPC[VPC Network]
+        end
+
+        %% Compute Layer
+        subgraph "Compute"
+            GKE[GKE Cluster]
+            GCF[Cloud Functions]
+            GAE[App Engine]
+        end
+
+        %% Data Layer
+        subgraph "Data"
+            SQL[Cloud SQL]
+            BT[Bigtable]
+            GCS[Cloud Storage]
+        end
+
+        %% Messaging
+        subgraph "Messaging"
+            PS[Pub/Sub]
+            MQ[Cloud Tasks]
+            WF[Workflows]
+        end
+
+        %% Support
+        subgraph "Support"
+            MON[Cloud Monitoring]
+            LOG[Cloud Logging]
+            TRC[Cloud Trace]
+        end
+    end
+
+    %% Kubernetes Resources
+    subgraph "Kubernetes Cluster"
+        %% Core Services
+        subgraph "Core Services"
+            API[API Services]
+            WEB[Web Frontend]
+            WS[WebSocket]
+        end
+
+        %% Infrastructure
+        subgraph "Infrastructure"
+            ISTIO[Service Mesh]
+            PROM[Prometheus]
+            GRAF[Grafana]
+        end
+
+        %% Storage
+        subgraph "Storage"
+            RD[Redis]
+            ES[Elasticsearch]
+            MDB[MongoDB]
+        end
+    end
+
+    %% External Services
+    subgraph "External Services"
+        SMS[SMS Gateway]
+        EMAIL[Email Service]
+        MAPS[Maps API]
+    end
+
+    %% Flow
+    Internet --> CDN
+    CDN --> LB
+    LB --> VPC
+    VPC --> GKE
+
+    GKE --> API
+    GKE --> WEB
+    GKE --> WS
+
+    API --> SQL
+    API --> BT
+    API --> GCS
+
+    API --> PS
+    PS --> GCF
+    GCF --> MQ
+    MQ --> WF
+
+    API --> RD
+    API --> ES
+    API --> MDB
+
+    API --> SMS
+    API --> EMAIL
+    API --> MAPS
+
+    %% Monitoring Flow
+    API -.-> MON
+    WEB -.-> MON
+    WS -.-> MON
+    MON --> LOG
+    MON --> TRC
+
+    %% Service Mesh
+    ISTIO --> API
+    ISTIO --> WEB
+    ISTIO --> WS
+    ISTIO --> PROM
+    PROM --> GRAF
+
+    %% Styling
+    classDef network fill:#f99,stroke:#333,stroke-width:2px
+    classDef compute fill:#9f9,stroke:#333,stroke-width:2px
+    classDef data fill:#99f,stroke:#333,stroke-width:2px
+    classDef messaging fill:#f9f,stroke:#333,stroke-width:2px
+    classDef support fill:#ff9,stroke:#333,stroke-width:2px
+    classDef k8s fill:#9ff,stroke:#333,stroke-width:2px
+    classDef external fill:#fcc,stroke:#333,stroke-width:2px
+
+    class LB,CDN,VPC network
+    class GKE,GCF,GAE compute
+    class SQL,BT,GCS data
+    class PS,MQ,WF messaging
+    class MON,LOG,TRC support
+    class API,WEB,WS,ISTIO,PROM,GRAF,RD,ES,MDB k8s
+    class SMS,EMAIL,MAPS external
+
+    %% Flow Styles
+    linkStyle default stroke:#333,stroke-width:2px
+    linkStyle 20,21,22 stroke:#f00,stroke-width:2px,stroke-dasharray: 5, 5
+    linkStyle 23,24,25,26,27 stroke:#0f0,stroke-width:2px

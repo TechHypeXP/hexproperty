@@ -1,0 +1,25 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["./src"],
+  "entryPointStrategy": "expand",
+  "out": "docs/api",
+  "plugin": ["typedoc-plugin-markdown"],
+  "theme": "markdown",
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Domain",
+    "Application",
+    "Infrastructure",
+    "Interface",
+    "*"
+  ],
+  "readme": "none",
+  "sort": ["source-order"],
+  "validation": {
+    "invalidLink": true,
+    "notExported": true
+  }
+}

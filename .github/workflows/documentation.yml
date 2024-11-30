@@ -1,0 +1,115 @@
+name: Documentation
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'tools/documentation/**'
+      - 'package.json'
+      - 'typedoc.json'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'docs/**'
+      - 'tools/documentation/**'
+      - 'package.json'
+      - 'typedoc.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run documentation validation
+        run: npm run docs:validate
+
+      - name: Run documentation tests
+        run: npm run docs:test
+
+      - name: Check documentation coverage
+        run: |
+          COVERAGE=$(npm run docs:validate | grep "Coverage:" | awk '{print $2}' | tr -d '%')
+          if (( $(echo "$COVERAGE < 90" | bc -l) )); then
+            echo "Documentation coverage ($COVERAGE%) is below 90%"
+            exit 1
+          fi
+
+  build:
+    needs: validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate API documentation
+        run: |
+          npm run docs:typedoc
+          npm run docs:api
+
+      - name: Generate architecture diagrams
+        run: npm run docs:diagrams
+
+      - name: Build documentation site
+        run: npm run docs:build
+
+      - name: Upload documentation artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: documentation
+          path: build/
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - name: Download documentation artifact
+        uses: actions/download-artifact@v3
+        with:
+          name: documentation
+          path: build/
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
+          commit_message: 'docs: update documentation'
+
+  notify:
+    needs: deploy
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "Documentation successfully deployed to GitHub Pages"
+          # Add notification logic here (e.g., Slack, Email)
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "Documentation deployment failed"
+          # Add notification logic here (e.g., Slack, Email)

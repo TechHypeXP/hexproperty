@@ -1,0 +1,139 @@
+# HexProperty GCP Deployment Configuration
+# Version: 1.0
+# Purpose: Complete infrastructure deployment for HexProperty application
+
+imports:
+- path: services.jinja    # Service definitions
+- path: database.jinja    # Database configurations
+- path: cdn.jinja         # CDN and load balancer setup
+- path: pubsub.jinja      # Pub/Sub configurations
+
+resources:
+# 1. Enable Required GCP APIs
+- name: enable-services
+  type: deploymentmanager.v2.virtual.enableServices
+  properties:
+    consumerId: project:${PROJECT_ID}
+    serviceNames:
+    - cloudrun.googleapis.com
+    - cloudsql.googleapis.com
+    - compute.googleapis.com
+    - cloudcdn.googleapis.com
+    - monitoring.googleapis.com
+    - pubsub.googleapis.com
+    - secretmanager.googleapis.com
+
+# 2. Regional Configuration
+- name: region-config
+  properties:
+    primary_region: us-central1    # Primary application region
+    secondary_region: europe-west3 # European region for CDN and EU operations
+    project: ${PROJECT_ID}
+
+# 3. Core Services Configuration
+- name: hexproperty-services
+  type: services.jinja
+  properties:
+    region: ${region-config.primary_region}
+    services:
+      reservation:
+        memory_limit: 256Mi
+        cpu_limit: "1"
+        max_instances: 10
+        min_instances: 0
+        scaling_metric: "concurrent_requests"
+        scaling_target: 50
+      
+      security:
+        memory_limit: 512Mi
+        cpu_limit: "1"
+        max_instances: 10
+        min_instances: 0
+        scaling_metric: "concurrent_requests"
+        scaling_target: 30
+      
+      document:
+        memory_limit: 512Mi
+        cpu_limit: "1"
+        max_instances: 10
+        min_instances: 0
+        scaling_metric: "concurrent_requests"
+        scaling_target: 40
+      
+      broker:
+        memory_limit: 256Mi
+        cpu_limit: "1"
+        max_instances: 5
+        min_instances: 0
+        scaling_metric: "concurrent_requests"
+        scaling_target: 20
+
+# 4. Database Configuration
+- name: hexproperty-db
+  type: database.jinja
+  properties:
+    instance_name: hexproperty-db-${deployment.name}
+    region: ${region-config.primary_region}
+    tier: db-f1-micro          # Development tier, adjust for production
+    database_version: POSTGRES_14
+    backup_enabled: true
+    backup_start_time: "02:00"  # 2 AM UTC
+    high_availability: false    # Set to true for production
+    authorized_networks: []     # Only private access by default
+    flags:
+      - name: "max_connections"
+        value: "100"
+
+# 5. CDN and Load Balancer Configuration
+- name: hexproperty-cdn
+  type: cdn.jinja
+  properties:
+    name: hexproperty-cdn
+    backend_service: hexproperty-backend
+    ssl_certificates: [hexproperty-cert]
+    cdn_region: ${region-config.secondary_region}
+    primary_region: ${region-config.primary_region}
+    domains: 
+      - ${deployment.custom.domain}
+    cache_policy:
+      default_ttl: 3600
+      max_ttl: 86400
+      client_ttl: 3600
+    security_policy:
+      name: hexproperty-security-policy
+      rules:
+        - priority: 1000
+          action: "allow"
+          description: "Allow traffic from specified regions"
+          match:
+            expr: 'origin.region_code == "EU" || origin.region_code == "ME"'
+
+# 6. Environment-Specific Variables
+variables:
+  development:
+    domain: "dev.hexproperty.com"
+    db_tier: "db-f1-micro"
+    high_availability: false
+  
+  staging:
+    domain: "staging.hexproperty.com"
+    db_tier: "db-custom-2-4096"
+    high_availability: false
+  
+  production:
+    domain: "hexproperty.com"
+    db_tier: "db-custom-4-8192"
+    high_availability: true
+
+# 7. Monitoring and Logging Configuration
+- name: monitoring-config
+  type: monitoring.v1.config
+  properties:
+    alerting:
+      enabled: true
+      notification_channels:
+        - email: alerts@hexproperty.com
+        - slack: "#alerts-production"
+    logging:
+      retention_days: 30
+      export_to_bigquery: true

@@ -1,0 +1,55 @@
+sequenceDiagram
+    participant C as Client
+    participant AG as API Gateway
+    participant LS as Lease Service
+    participant PS as Property Service
+    participant TS as Tenant Service
+    participant BS as Billing Service
+    participant DS as Document Service
+    participant NS as Notification Service
+    participant DB as Database
+    participant ES as Event Store
+
+    %% Lease Creation
+    C->>+AG: POST /leases
+    AG->>+LS: Create Lease Command
+    
+    %% Validations
+    LS->>PS: Validate Property
+    PS-->>LS: Property Valid
+    LS->>TS: Validate Tenant
+    TS-->>LS: Tenant Valid
+    
+    %% Document Generation
+    LS->>+DS: Generate Lease Document
+    DS->>DS: Create Agreement
+    DS->>DS: Add Terms
+    DS->>DS: Add Signatures
+    DS-->>-LS: Document Generated
+    
+    %% Billing Setup
+    LS->>+BS: Setup Billing
+    BS->>BS: Create Payment Schedule
+    BS->>BS: Configure Auto-pay
+    BS-->>-LS: Billing Configured
+    
+    %% Storage
+    LS->>DB: Store Lease Details
+    LS->>ES: Publish LeaseCreated
+    
+    %% Notifications
+    LS->>+NS: Send Notifications
+    NS->>NS: Notify Property Manager
+    NS->>NS: Notify Tenant
+    NS-->>-LS: Notifications Sent
+    
+    %% Response
+    LS-->>-AG: Lease Created Response
+    AG-->>-C: 201 Created
+    
+    Note over C,ES: Lease creation complete
+    
+    %% Background Tasks
+    Note over DB,ES: Background processing
+    BS->>BS: Schedule payments
+    DS->>DS: Archive documents

@@ -1,0 +1,94 @@
+graph LR
+    %% Data Sources
+    subgraph "Primary Storage"
+        PS[PostgreSQL]
+        PS_P[Properties]
+        PS_T[Tenants]
+        PS_L[Leases]
+        PS_F[Financials]
+    end
+
+    subgraph "Cache Layer"
+        RC[Redis Cache]
+        RC_S[Session]
+        RC_Q[Query]
+        RC_R[Rate Limit]
+    end
+
+    subgraph "Search Engine"
+        ES[Elasticsearch]
+        ES_P[Property Index]
+        ES_T[Tenant Index]
+        ES_D[Document Index]
+    end
+
+    subgraph "Event Store"
+        KF[Kafka]
+        KF_P[Property Events]
+        KF_T[Tenant Events]
+        KF_L[Lease Events]
+        KF_F[Financial Events]
+    end
+
+    subgraph "Document Store"
+        MG[MongoDB]
+        MG_D[Documents]
+        MG_M[Media]
+        MG_R[Reports]
+    end
+
+    subgraph "Analytics"
+        BQ[BigQuery]
+        BQ_M[Metrics]
+        BQ_A[Analytics]
+        BQ_R[Reports]
+    end
+
+    %% Data Flow
+    PS_P --> ES_P
+    PS_T --> ES_T
+    PS_L --> KF_L
+    PS_F --> BQ_M
+
+    KF_P --> PS_P
+    KF_T --> PS_T
+    KF_L --> PS_L
+    KF_F --> PS_F
+
+    ES_P --> RC_Q
+    ES_T --> RC_Q
+    ES_D --> RC_Q
+
+    MG_D --> ES_D
+    MG_M --> ES_D
+    MG_R --> BQ_R
+
+    %% Cache Interactions
+    RC_S -.-> PS
+    RC_Q -.-> ES
+    RC_R -.-> KF
+
+    %% Analytics Flow
+    PS --> BQ
+    KF --> BQ
+    MG --> BQ
+
+    %% Styling
+    classDef storage fill:#f9f,stroke:#333,stroke-width:2px
+    classDef cache fill:#bbf,stroke:#333,stroke-width:2px
+    classDef search fill:#bfb,stroke:#333,stroke-width:2px
+    classDef events fill:#fbf,stroke:#333,stroke-width:2px
+    classDef docs fill:#bff,stroke:#333,stroke-width:2px
+    classDef analytics fill:#ffb,stroke:#333,stroke-width:2px
+
+    class PS,PS_P,PS_T,PS_L,PS_F storage
+    class RC,RC_S,RC_Q,RC_R cache
+    class ES,ES_P,ES_T,ES_D search
+    class KF,KF_P,KF_T,KF_L,KF_F events
+    class MG,MG_D,MG_M,MG_R docs
+    class BQ,BQ_M,BQ_A,BQ_R analytics
+
+    %% Flow Styles
+    linkStyle default stroke:#333,stroke-width:2px
+    linkStyle 8,9,10,11 stroke:#0f0,stroke-width:2px
+    linkStyle 16,17,18 stroke:#f00,stroke-width:2px,stroke-dasharray: 5, 5

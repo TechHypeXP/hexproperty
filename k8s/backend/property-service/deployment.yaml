@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: property-service
+  namespace: hexproperty
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: property-service
+  template:
+    metadata:
+      labels:
+        app: property-service
+    spec:
+      containers:
+      - name: property-service
+        image: hexproperty/property-service:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "500m"
+            memory: "512Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: property-service-secrets
+              key: database_url
+        - name: KAFKA_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: property-service-config
+              key: kafka_brokers
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: property-service-secrets
+              key: redis_url
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: property-service-config
+      imagePullSecrets:
+      - name: registry-secret

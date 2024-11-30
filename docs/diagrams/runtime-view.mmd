@@ -1,0 +1,75 @@
+graph TD
+    %% Style Definitions
+    classDef runtime fill:#f9f,stroke:#333,stroke-width:2px
+    classDef external fill:#ddf,stroke:#333,stroke-width:2px
+    classDef data fill:#ffd,stroke:#333,stroke-width:2px
+
+    %% Client Applications
+    subgraph "Client Layer"
+        CL[Web Client]
+        CM[Mobile Client]
+        CT[Third-party Client]
+    end
+
+    %% Runtime Components
+    subgraph "Runtime Components"
+        %% API Gateway
+        AG[API Gateway]
+        AG_A[Auth Handler]
+        AG_R[Rate Limiter]
+        AG_C[Cache]
+
+        %% Service Discovery
+        SD[Service Discovery]
+        SD_R[Registry]
+        SD_H[Health Checker]
+
+        %% Event Processing
+        EP[Event Processor]
+        EP_S[Stream Processor]
+        EP_Q[Message Queue]
+
+        %% Business Services
+        BS[Business Services]
+        BS_P[Property Service]
+        BS_T[Tenant Service]
+        BS_L[Lease Service]
+
+        %% Data Services
+        DS[Data Services]
+        DS_C[Cache Layer]
+        DS_P[Persistence]
+        DS_S[Search Engine]
+    end
+
+    %% External Services
+    subgraph "External Services"
+        ES[External APIs]
+        ES_P[Payment Gateway]
+        ES_N[Notification Service]
+        ES_M[Map Service]
+    end
+
+    %% Runtime Connections
+    CL & CM & CT --> AG
+    AG --> AG_A --> AG_R --> AG_C
+    AG --> SD
+    SD --> SD_R --> SD_H
+    AG --> BS
+    BS --> BS_P & BS_T & BS_L
+    BS --> EP
+    EP --> EP_S --> EP_Q
+    BS --> DS
+    DS --> DS_C & DS_P & DS_S
+    BS --> ES
+    ES --> ES_P & ES_N & ES_M
+
+    %% Runtime Flows
+    AG_C -.-> DS_C
+    EP_Q -.-> BS
+    DS_S -.-> BS
+    
+    %% Apply Styles
+    class CL,CM,CT runtime
+    class ES,ES_P,ES_N,ES_M external
+    class DS,DS_C,DS_P,DS_S data

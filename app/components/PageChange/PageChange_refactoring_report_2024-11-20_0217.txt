@@ -1,0 +1,18 @@
+# PageChange Directory Report
+
+## Overview
+
+The 'PageChange' directory contains one React component that renders a loading animation for page changes.
+
+## Components
+
+* `PageChange.tsx`: A loading animation for page changes.
+
+## Code Quality
+
+The code in the 'PageChange' directory appears to be well-organized and follows good coding practices. The component is well-structured and easy to understand.
+
+## Recommendations
+
+* Consider adding more comments to explain the purpose of the component and how it is used.
+* Consider adding more tests to ensure the component is working as expected.

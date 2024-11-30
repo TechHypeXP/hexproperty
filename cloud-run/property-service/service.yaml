@@ -1,0 +1,56 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: property-service
+  namespace: hexproperty
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/maxScale: "2"
+        autoscaling.knative.dev/minScale: "0"
+        run.googleapis.com/cloudsql-instances: "hexproperty:us-central1:hexproperty-staging"
+        run.googleapis.com/vpc-access-connector: "projects/hexproperty/locations/us-central1/connectors/vpc-connector"
+    spec:
+      containerConcurrency: 6
+      containers:
+      - image: gcr.io/hexproperty/property-service:latest
+        resources:
+          limits:
+            cpu: 500m
+            memory: 256Mi
+          requests:
+            cpu: 200m
+            memory: 128Mi
+        ports:
+        - containerPort: 8080
+        env:
+        - name: NODE_ENV
+          value: "staging"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: property-service-secrets
+              key: database_url
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: property-service-secrets
+              key: redis_url
+        - name: KAFKA_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: property-service-config
+              key: kafka_brokers
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 10

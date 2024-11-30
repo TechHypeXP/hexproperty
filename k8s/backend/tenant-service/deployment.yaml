@@ -1,0 +1,61 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tenant-service
+  namespace: hexproperty
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: tenant-service
+  template:
+    metadata:
+      labels:
+        app: tenant-service
+    spec:
+      containers:
+      - name: tenant-service
+        image: hexproperty/tenant-service:latest
+        ports:
+        - containerPort: 3000
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        env:
+        - name: NODE_ENV
+          value: "staging"
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: tenant-service-secrets
+              key: database_url
+        - name: KAFKA_BROKERS
+          valueFrom:
+            configMapKeyRef:
+              name: tenant-service-config
+              key: kafka_brokers
+        volumeMounts:
+        - name: config-volume
+          mountPath: /app/config
+      volumes:
+      - name: config-volume
+        configMap:
+          name: tenant-service-config
+      imagePullSecrets:
+      - name: registry-secret

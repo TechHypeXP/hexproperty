@@ -1,0 +1,104 @@
+graph TD
+    %% Style Definitions
+    classDef aggregate fill:#f9f,stroke:#333,stroke-width:2px
+    classDef entity fill:#ddf,stroke:#333,stroke-width:2px
+    classDef valueobj fill:#ffd,stroke:#333,stroke-width:2px
+    classDef policy fill:#dfd,stroke:#333,stroke-width:2px
+
+    %% Property Aggregate
+    subgraph "Property Aggregate"
+        PA[Property]:::aggregate
+        PA_U[Unit]:::entity
+        PA_A[Amenity]:::entity
+        PA_L[Location]:::valueobj
+        PA_S[Status]:::valueobj
+        PA_P[PropertyPolicy]:::policy
+    end
+
+    %% Tenant Aggregate
+    subgraph "Tenant Aggregate"
+        TA[Tenant]:::aggregate
+        TA_P[Profile]:::entity
+        TA_D[Document]:::entity
+        TA_C[Contact]:::valueobj
+        TA_V[Verification]:::valueobj
+        TA_R[TenantPolicy]:::policy
+    end
+
+    %% Lease Aggregate
+    subgraph "Lease Aggregate"
+        LA[Lease]:::aggregate
+        LA_T[Term]:::entity
+        LA_P[Payment]:::entity
+        LA_S[Schedule]:::valueobj
+        LA_C[Condition]:::valueobj
+        LA_R[LeasePolicy]:::policy
+    end
+
+    %% Billing Aggregate
+    subgraph "Billing Aggregate"
+        BA[Billing]:::aggregate
+        BA_I[Invoice]:::entity
+        BA_T[Transaction]:::entity
+        BA_A[Amount]:::valueobj
+        BA_S[Status]:::valueobj
+        BA_P[BillingPolicy]:::policy
+    end
+
+    %% Domain Events
+    subgraph "Domain Events"
+        DE[Events]
+        DE_P[PropertyCreated]
+        DE_T[TenantOnboarded]
+        DE_L[LeaseSignedEvent]
+        DE_B[BillingGeneratedEvent]
+    end
+
+    %% Domain Services
+    subgraph "Domain Services"
+        DS[Services]
+        DS_P[PropertyManager]
+        DS_T[TenantManager]
+        DS_L[LeaseManager]
+        DS_B[BillingManager]
+    end
+
+    %% Aggregate Relationships
+    PA --> LA
+    TA --> LA
+    LA --> BA
+
+    %% Entity Relationships
+    PA --> PA_U & PA_A
+    PA_U & PA_A --> PA_L & PA_S
+    PA --> PA_P
+
+    TA --> TA_P & TA_D
+    TA_P & TA_D --> TA_C & TA_V
+    TA --> TA_R
+
+    LA --> LA_T & LA_P
+    LA_T & LA_P --> LA_S & LA_C
+    LA --> LA_R
+
+    BA --> BA_I & BA_T
+    BA_I & BA_T --> BA_A & BA_S
+    BA --> BA_P
+
+    %% Event Relationships
+    PA --> DE_P
+    TA --> DE_T
+    LA --> DE_L
+    BA --> DE_B
+
+    %% Service Relationships
+    DS_P --> PA
+    DS_T --> TA
+    DS_L --> LA
+    DS_B --> BA
+
+    %% Apply Styles
+    class PA,TA,LA,BA aggregate
+    class PA_U,PA_A,TA_P,TA_D,LA_T,LA_P,BA_I,BA_T entity
+    class PA_L,PA_S,TA_C,TA_V,LA_S,LA_C,BA_A,BA_S valueobj
+    class PA_P,TA_R,LA_R,BA_P policy

@@ -1,0 +1,97 @@
+graph TD
+    %% Style Definitions
+    classDef cloud fill:#ddf,stroke:#333,stroke-width:2px
+    classDef container fill:#f9f,stroke:#333,stroke-width:2px
+    classDef storage fill:#ffd,stroke:#333,stroke-width:2px
+
+    %% Cloud Infrastructure
+    subgraph "Google Cloud Platform"
+        %% Kubernetes Cluster
+        subgraph "GKE Cluster"
+            %% Frontend
+            FE[Frontend Services]
+            FE_W[Web Server]
+            FE_S[Static Assets]
+            FE_C[CDN]
+
+            %% API Layer
+            AP[API Layer]
+            AP_G[API Gateway]
+            AP_L[Load Balancer]
+            AP_C[Cloud Armor]
+
+            %% Application Services
+            AS[Application Services]
+            AS_P[Property Service]
+            AS_T[Tenant Service]
+            AS_L[Lease Service]
+            AS_B[Billing Service]
+
+            %% Support Services
+            SS[Support Services]
+            SS_M[Monitoring]
+            SS_L[Logging]
+            SS_T[Tracing]
+        end
+
+        %% Data Storage
+        subgraph "Data Layer"
+            %% Databases
+            DB[Databases]
+            DB_P[Cloud SQL]
+            DB_M[MongoDB Atlas]
+            
+            %% Cache
+            CH[Caching]
+            CH_R[Redis]
+            CH_M[Memorystore]
+
+            %% Search
+            SE[Search]
+            SE_E[Elasticsearch]
+            
+            %% Message Queue
+            MQ[Message Queue]
+            MQ_K[Cloud Pub/Sub]
+            MQ_S[Cloud Storage]
+        end
+
+        %% Identity & Security
+        subgraph "Security Layer"
+            SC[Security]
+            SC_I[IAM]
+            SC_K[KMS]
+            SC_S[Secret Manager]
+        end
+    end
+
+    %% External Services
+    subgraph "External Services"
+        EX[External APIs]
+        EX_P[Payment Gateway]
+        EX_N[Notification Service]
+        EX_M[Maps API]
+    end
+
+    %% Deployment Connections
+    FE --> AP
+    AP --> AS
+    AS --> DB & CH & SE & MQ
+    AS --> EX
+    SS --> AS
+    SC --> AS & AP & FE
+
+    %% Internal Connections
+    FE_W --> FE_S --> FE_C
+    AP_G --> AP_L --> AP_C
+    AS_P & AS_T & AS_L & AS_B
+    SS_M --> SS_L --> SS_T
+    DB_P --> DB_M
+    CH_R --> CH_M
+    MQ_K --> MQ_S
+    SC_I --> SC_K --> SC_S
+
+    %% Apply Styles
+    class FE,AP,AS,SS,DB,CH,SE,MQ,SC cloud
+    class FE_W,FE_S,FE_C,AP_G,AP_L,AP_C,AS_P,AS_T,AS_L,AS_B container
+    class DB_P,DB_M,CH_R,CH_M,SE_E,MQ_K,MQ_S storage

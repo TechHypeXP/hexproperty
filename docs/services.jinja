@@ -1,0 +1,71 @@
+# services.jinja
+# Purpose: Cloud Run service definitions and configurations
+# Used by: deployment-config.yaml
+
+{% macro generate_service(name, config) %}
+- name: {{ name }}-service
+  type: gcp-types/run.googleapis.com/v1:services
+  properties:
+    location: {{ properties.region }}
+    template:
+      spec:
+        containers:
+        - image: gcr.io/${PROJECT_ID}/hexproperty-{{ name }}:${DEPLOYMENT_VERSION}
+          resources:
+            limits:
+              memory: {{ config.memory_limit }}
+              cpu: {{ config.cpu_limit }}
+          env:
+          - name: ENVIRONMENT
+            value: ${ENVIRONMENT}
+          - name: SERVICE_NAME
+            value: {{ name }}
+          - name: REGION
+            value: {{ properties.region }}
+          # Database connection (from Secret Manager)
+          - name: DATABASE_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ name }}-db-url
+                key: latest
+          # Redis connection (from Secret Manager)
+          - name: REDIS_URL
+            valueFrom:
+              secretKeyRef:
+                name: {{ name }}-redis-url
+                key: latest
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: 8080
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /alive
+              port: 8080
+            periodSeconds: 15
+      metadata:
+        annotations:
+          autoscaling.knative.dev/maxScale: "{{ config.max_instances }}"
+          autoscaling.knative.dev/minScale: "{{ config.min_instances }}"
+          autoscaling.knative.dev/metric: "{{ config.scaling_metric }}"
+          autoscaling.knative.dev/target: "{{ config.scaling_target }}"
+{% endmacro %}
+
+resources:
+{% for name, config in properties.services.items() %}
+{{ generate_service(name, config) }}
+{% endfor %}
+
+outputs:
+{% for name in properties.services %}
+- name: {{ name }}-url
+  value: $(ref.{{ name }}-service.status.url)
+{% endfor %}

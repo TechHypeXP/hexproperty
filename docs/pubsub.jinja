@@ -1,0 +1,57 @@
+# pubsub.jinja
+# Purpose: Pub/Sub topics and subscriptions configuration
+# Used by: deployment-config.yaml
+
+resources:
+# Define common topics
+{% set topics = [
+    'reservation-events',
+    'security-events',
+    'document-events',
+    'broker-events'
+] %}
+
+{% for topic in topics %}
+- name: {{ topic }}
+  type: gcp-types/pubsub-v1:projects.topics
+  properties:
+    topic: {{ topic }}
+
+# Create default subscription for each topic
+- name: {{ topic }}-subscription
+  type: gcp-types/pubsub-v1:projects.subscriptions
+  properties:
+    subscription: {{ topic }}-sub
+    topic: $(ref.{{ topic }}.name)
+    ackDeadlineSeconds: 30
+    retainAckedMessages: false
+    messageRetentionDuration: 604800s  # 7 days
+    expirationPolicy:
+      ttl: 2592000s  # 30 days
+    retryPolicy:
+      minimumBackoff: 10s
+      maximumBackoff: 600s  # 10 minutes
+
+# Create dead-letter topic and subscription
+- name: {{ topic }}-dlq
+  type: gcp-types/pubsub-v1:projects.topics
+  properties:
+    topic: {{ topic }}-dlq
+
+- name: {{ topic }}-dlq-subscription
+  type: gcp-types/pubsub-v1:projects.subscriptions
+  properties:
+    subscription: {{ topic }}-dlq-sub
+    topic: $(ref.{{ topic }}-dlq.name)
+    ackDeadlineSeconds: 600  # 10 minutes
+    messageRetentionDuration: 604800s  # 7 days
+    
+{% endfor %}
+
+outputs:
+{% for topic in topics %}
+- name: {{ topic }}-name
+  value: $(ref.{{ topic }}.name)
+- name: {{ topic }}-subscription
+  value: $(ref.{{ topic }}-subscription.name)
+{% endfor %}

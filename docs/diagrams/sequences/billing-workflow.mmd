@@ -1,0 +1,59 @@
+sequenceDiagram
+    participant S as Scheduler
+    participant BS as Billing Service
+    participant LS as Lease Service
+    participant PS as Payment Service
+    participant AS as Accounting Service
+    participant NS as Notification Service
+    participant DB as Database
+    participant ES as Event Store
+
+    %% Payment Due
+    S->>+BS: Trigger Payment Due
+    BS->>LS: Get Lease Details
+    LS-->>BS: Lease Information
+    
+    %% Payment Processing
+    BS->>+PS: Process Payment
+    PS->>PS: Validate Payment Method
+    PS->>PS: Execute Transaction
+    PS-->>-BS: Payment Result
+    
+    alt Successful Payment
+        %% Success Path
+        BS->>AS: Record Transaction
+        BS->>DB: Update Payment Status
+        BS->>ES: Publish PaymentReceived
+        BS->>+NS: Send Receipt
+        NS->>NS: Generate Receipt
+        NS->>NS: Send to Tenant
+        NS-->>-BS: Receipt Sent
+    else Failed Payment
+        %% Failure Path
+        BS->>DB: Mark Payment Failed
+        BS->>ES: Publish PaymentFailed
+        BS->>+NS: Send Payment Failed
+        NS->>NS: Generate Notice
+        NS->>NS: Send to Tenant
+        NS->>NS: Send to Property Manager
+        NS-->>-BS: Notices Sent
+    end
+    
+    %% Late Payment Handling
+    opt Payment Overdue
+        BS->>BS: Calculate Late Fees
+        BS->>DB: Update Balance
+        BS->>ES: Publish LateFeeAdded
+        BS->>+NS: Send Late Notice
+        NS->>NS: Generate Late Notice
+        NS->>NS: Send to Tenant
+        NS->>NS: Send to Property Manager
+        NS-->>-BS: Late Notices Sent
+    end
+    
+    BS-->>-S: Processing Complete
+    
+    %% Background Tasks
+    Note over DB,ES: Background processing
+    AS->>AS: Generate reports
+    DB->>DB: Update analytics

@@ -1,0 +1,63 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: property-service-config
+  namespace: hexproperty
+data:
+  config.yaml: |
+    server:
+      port: 3000
+      cors:
+        origins:
+          - https://app.hexproperty.com
+        methods:
+          - GET
+          - POST
+          - PUT
+          - DELETE
+        headers:
+          - Content-Type
+          - Authorization
+    
+    kafka:
+      brokers:
+        - kafka-0.broker.hexproperty:9092
+        - kafka-1.broker.hexproperty:9092
+        - kafka-2.broker.hexproperty:9092
+      topics:
+        property_created: property.created
+        property_updated: property.updated
+        property_deleted: property.deleted
+    
+    elasticsearch:
+      hosts:
+        - http://elasticsearch-master:9200
+      index_prefix: property
+    
+    redis:
+      ttl: 3600
+      key_prefix: property
+    
+    logging:
+      level: info
+      format: json
+    
+    metrics:
+      enabled: true
+      path: /metrics
+    
+    tracing:
+      enabled: true
+      serviceName: property-service
+      samplingRate: 0.1
+    
+    ratelimit:
+      enabled: true
+      window: 60000
+      max: 1000
+    
+    circuit_breaker:
+      enabled: true
+      timeout: 5000
+      resetTimeout: 30000
+      errorThreshold: 50

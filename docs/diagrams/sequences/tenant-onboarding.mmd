@@ -1,0 +1,41 @@
+sequenceDiagram
+    participant C as Client
+    participant AG as API Gateway
+    participant TS as Tenant Service
+    participant VS as Verification Service
+    participant NS as Notification Service
+    participant DB as Database
+    participant ES as Event Store
+
+    C->>+AG: POST /tenants/onboard
+    AG->>+TS: Create Tenant Command
+    
+    %% Profile Creation
+    TS->>DB: Check Existing Profile
+    DB-->>TS: No Profile Found
+    TS->>DB: Create Tenant Profile
+    
+    %% Verification Process
+    TS->>+VS: Initiate Verification
+    VS->>VS: Process Documents
+    VS->>VS: Run Background Check
+    VS-->>-TS: Verification Results
+    
+    %% Event Publishing
+    TS->>ES: Publish TenantCreated
+    TS->>ES: Publish VerificationCompleted
+    
+    %% Notification
+    TS->>+NS: Send Welcome Email
+    NS-->>-TS: Email Sent
+    
+    %% Response Chain
+    TS-->>-AG: Tenant Created Response
+    AG-->>-C: 201 Created
+    
+    Note over C,ES: Tenant onboarding complete
+    
+    %% Async Background Tasks
+    Note over NS,DB: Background tasks continue
+    NS->>NS: Schedule follow-up
+    DB->>DB: Index tenant data

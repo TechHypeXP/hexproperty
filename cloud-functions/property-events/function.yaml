@@ -1,0 +1,31 @@
+runtime: nodejs16
+entryPoint: processPropertyEvent
+eventTrigger:
+  eventType: google.pubsub.topic.publish
+  resource: projects/hexproperty/topics/property-events
+  service: pubsub.googleapis.com
+
+environmentVariables:
+  NODE_ENV: staging
+  PROJECT_ID: hexproperty-staging
+
+labels:
+  deployment-tool: cloud-functions-deploy
+
+serviceAccountEmail: property-events@hexproperty-staging.iam.gserviceaccount.com
+
+vpcConnector: projects/hexproperty/locations/us-central1/connectors/vpc-connector
+vpcConnectorEgressSettings: PRIVATE_RANGES_ONLY
+
+availableMemoryMb: 256
+timeout: 60s
+maxInstances: 2
+minInstances: 0
+
+secretEnvironmentVariables:
+  - key: DATABASE_URL
+    secret: property-service-secrets
+    version: latest
+  - key: REDIS_URL
+    secret: property-service-secrets
+    version: latest
