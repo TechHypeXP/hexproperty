@@ -56,3 +56,4 @@ venv/
 # Build artifacts
 dist/
 .cache/
+snyk.exe
